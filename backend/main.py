@@ -21,8 +21,8 @@ async def root():
 
 class TextInput(BaseModel):
     text: str
-
-@app.post("/analyze/")
+    
+@app.post("/api/analyze/")
 async def analyze_text(input_data: TextInput):
     if not input_data.text.strip():
         return {"error": "Text input is empty"}

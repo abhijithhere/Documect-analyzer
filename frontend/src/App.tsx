@@ -26,36 +26,45 @@ export default function App() {
   const [fileName, setFileName] = useState<string | null>(null);
 
   async function handleAnalyze(overrideText?: string) {
-    setLoading(true);
-    setError(null);
-    setResult(null);
-    try {
-      const payloadText = overrideText !== undefined ? overrideText : text;
-      const res = await fetch("http://127.0.0.1:8000/api/analyze/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: payloadText }),
-      });
-      if (!res.ok) {
-        let message = `Request failed with status ${res.status}`;
-        try {
-          const j = (await res.json()) as AnalyzeResponse;
-          if (j?.error) message = j.error;
-        } catch {
-          message = await res.text();
-        }
-        setError(message);
-        return;
+  setLoading(true);
+  setError(null);
+  setResult(null);
+
+  try {
+    const payloadText = overrideText !== undefined ? overrideText : text;
+
+    // ✅ Use environment variable in production
+    const API_BASE_URL =
+      import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
+
+    const res = await fetch(`${API_BASE_URL}/api/analyze/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: payloadText }),
+    });
+
+    if (!res.ok) {
+      let message = `Request failed with status ${res.status}`;
+      try {
+        const j = (await res.json()) as AnalyzeResponse;
+        if (j?.error) message = j.error;
+      } catch {
+        message = await res.text();
       }
-      const data: AnalyzeResponse = await res.json();
-      setResult(data);
-      if (data.error) setError(data.error);
-    } catch (e) {
-      setError("Failed to reach backend");
-    } finally {
-      setLoading(false);
+      setError(message);
+      return;
     }
+
+    const data: AnalyzeResponse = await res.json();
+    setResult(data);
+    if (data.error) setError(data.error);
+  } catch (e) {
+    setError("❌ Failed to reach backend");
+  } finally {
+    setLoading(false);
   }
+}
+
 
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
